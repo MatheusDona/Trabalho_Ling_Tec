@@ -50,6 +50,9 @@ administração.
 ## 🧱 Estrutura do projeto
 
 ``` text
+Docs/
+│
+├── sistema_Academia.pdf
 Sistema_Academia/
 │
 ├── main.c
