@@ -222,3 +222,232 @@ void alterarAluno(void) {
         fclose(arquivo);
         return;
     }
+
+while (fread(&aluno, sizeof(Aluno), 1, arquivo) == 1) {
+        if (strcmp(aluno.cpf, cpf) == 0) {
+            encontrado = 1;
+            printf("\nDados atuais:");
+            mostrarAluno(&aluno);
+
+            lerTexto("Novo nome: ", texto, sizeof(texto));
+            if (strlen(texto) > 0) strcpy(aluno.nome, texto);
+
+            lerTexto("Novo telefone: ", texto, sizeof(texto));
+            if (strlen(texto) > 0) strcpy(aluno.telefone, texto);
+
+            idade = lerInteiro("Nova idade (0 para manter): ");
+            if (idade > 0) aluno.idade = idade;
+
+            printf("Deseja alterar o plano? (1 - Sim / 0 - Nao): ");
+            if (lerInteiro("") == 1) {
+                if (!escolherPlano(aluno.plano, &aluno.valorMensalidade)) {
+                    printf("Plano mantido.\n");
+                }
+            }
+        }
+
+        if (fwrite(&aluno, sizeof(Aluno), 1, temporario) != 1) {
+            printf("Erro ao gravar arquivo temporario.\n");
+            fclose(arquivo);
+            fclose(temporario);
+            remove("dados/temporario.dat");
+            return;
+        }
+    }
+
+    fclose(arquivo);
+    fclose(temporario);
+
+    if (!encontrado) {
+        remove("dados/temporario.dat");
+        printf("Aluno nao encontrado.\n");
+        return;
+    }
+
+    if (remove(ARQUIVO_ALUNOS) != 0 ||
+        rename("dados/temporario.dat", ARQUIVO_ALUNOS) != 0) {
+        printf("Erro ao atualizar o arquivo de alunos.\n");
+        return;
+    }
+    printf("Cadastro alterado com sucesso.\n");
+}
+
+void excluirAluno(void) {
+    FILE *arquivo, *temporario;
+    Aluno aluno;
+    char cpf[15];
+    int encontrado = 0, confirmar;
+
+    lerTexto("CPF do aluno que deseja excluir: ", cpf, sizeof(cpf));
+    if (!abrirArquivo(&arquivo, "rb")) return;
+
+    temporario = fopen("dados/temporario.dat", "wb");
+    if (temporario == NULL) {
+        printf("Erro ao criar arquivo temporario.\n");
+        fclose(arquivo);
+        return;
+    }
+
+    while (fread(&aluno, sizeof(Aluno), 1, arquivo) == 1) {
+        if (strcmp(aluno.cpf, cpf) == 0) {
+            encontrado = 1;
+            mostrarAluno(&aluno);
+            confirmar = lerInteiro("Confirmar exclusao? (1 - Sim / 0 - Nao): ");
+            if (confirmar != 1) {
+                if (fwrite(&aluno, sizeof(Aluno), 1, temporario) != 1)
+                    printf("Erro ao gravar registro.\n");
+                encontrado = 2;
+            }
+        } else {
+            if (fwrite(&aluno, sizeof(Aluno), 1, temporario) != 1)
+                printf("Erro ao gravar registro.\n");
+        }
+    }
+
+    fclose(arquivo);
+    fclose(temporario);
+
+    if (encontrado == 0) {
+        remove("dados/temporario.dat");
+        printf("Aluno nao encontrado.\n");
+    } else if (encontrado == 2) {
+        remove("dados/temporario.dat");
+        printf("Exclusao cancelada.\n");
+    } else if (remove(ARQUIVO_ALUNOS) != 0 ||
+               rename("dados/temporario.dat", ARQUIVO_ALUNOS) != 0) {
+        printf("Erro ao atualizar o arquivo.\n");
+    } else {
+        printf("Aluno excluido com sucesso.\n");
+    }
+}
+
+void registrarPagamento(void) {
+    FILE *arquivo, *temporario;
+    Aluno aluno;
+    char cpf[15];
+    int encontrado = 0;
+
+    lerTexto("CPF do aluno: ", cpf, sizeof(cpf));
+    if (!abrirArquivo(&arquivo, "rb")) return;
+
+    temporario = fopen("dados/temporario.dat", "wb");
+    if (temporario == NULL) {
+        printf("Erro ao criar arquivo temporario.\n");
+        fclose(arquivo);
+        return;
+    }
+
+    while (fread(&aluno, sizeof(Aluno), 1, arquivo) == 1) {
+        if (strcmp(aluno.cpf, cpf) == 0) {
+            encontrado = 1;
+            strcpy(aluno.situacao, "Pago");
+        }
+        fwrite(&aluno, sizeof(Aluno), 1, temporario);
+    }
+
+    fclose(arquivo);
+    fclose(temporario);
+
+    if (!encontrado) {
+        remove("dados/temporario.dat");
+        printf("Aluno nao encontrado.\n");
+    } else if (remove(ARQUIVO_ALUNOS) != 0 ||
+               rename("dados/temporario.dat", ARQUIVO_ALUNOS) != 0) {
+        printf("Erro ao atualizar o arquivo.\n");
+    } else {
+        printf("Pagamento registrado com sucesso.\n");
+    }
+}
+
+void listarPendentes(void) {
+    FILE *arquivo;
+    Aluno aluno;
+    int quantidade = 0;
+
+    if (!abrirArquivo(&arquivo, "rb")) return;
+
+    printf("\n===== ALUNOS COM MENSALIDADE PENDENTE =====\n");
+    while (fread(&aluno, sizeof(Aluno), 1, arquivo) == 1) {
+        if (strcmp(aluno.situacao, "Pendente") == 0) {
+            mostrarAluno(&aluno);
+            quantidade++;
+        }
+    }
+
+    if (quantidade == 0) printf("Nao existem alunos pendentes.\n");
+    fclose(arquivo);
+}
+
+void iniciarNovoMes(void) {
+    FILE *arquivo, *temporario;
+    Aluno aluno;
+    int confirmar, quantidade = 0;
+
+    printf("\nATENCAO: todos os alunos serao marcados como Pendente.\n");
+    confirmar = lerInteiro("Deseja continuar? (1 - Sim / 0 - Nao): ");
+    if (confirmar != 1) {
+        printf("Operacao cancelada.\n");
+        return;
+    }
+
+    if (!abrirArquivo(&arquivo, "rb")) return;
+    temporario = fopen("dados/temporario.dat", "wb");
+    if (temporario == NULL) {
+        printf("Erro ao criar arquivo temporario.\n");
+        fclose(arquivo);
+        return;
+    }
+
+    while (fread(&aluno, sizeof(Aluno), 1, arquivo) == 1) {
+        strcpy(aluno.situacao, "Pendente");
+        if (fwrite(&aluno, sizeof(Aluno), 1, temporario) == 1)
+            quantidade++;
+    }
+
+    fclose(arquivo);
+    fclose(temporario);
+
+    if (remove(ARQUIVO_ALUNOS) != 0 ||
+        rename("dados/temporario.dat", ARQUIVO_ALUNOS) != 0) {
+        printf("Erro ao atualizar o arquivo.\n");
+    } else {
+        printf("Novo mes iniciado. %d aluno(s) agora estao pendentes.\n", quantidade);
+    }
+}
+
+void gerarRelatorio(void) {
+    FILE *arquivo;
+    Aluno aluno;
+    int total = 0, pagos = 0, pendentes = 0;
+    int basico = 0, intermediario = 0, premium = 0;
+    float renda = 0.0f;
+
+    if (!abrirArquivo(&arquivo, "rb")) return;
+
+    while (fread(&aluno, sizeof(Aluno), 1, arquivo) == 1) {
+        total++;
+
+        if (strcmp(aluno.situacao, "Pago") == 0) {
+            pagos++;
+            renda += aluno.valorMensalidade;
+        } else {
+            pendentes++;
+        }
+
+        if (strcmp(aluno.plano, "Basico") == 0) basico++;
+        else if (strcmp(aluno.plano, "Intermediario") == 0) intermediario++;
+        else if (strcmp(aluno.plano, "Premium") == 0) premium++;
+    }
+
+    fclose(arquivo);
+
+    printf("\n========== RELATORIO DA ACADEMIA ==========\n");
+    printf("Total de alunos: %d\n", total);
+    printf("Mensalidades pagas: %d\n", pagos);
+    printf("Mensalidades pendentes: %d\n", pendentes);
+    printf("\nAlunos por plano:\n");
+    printf("Basico: %d\n", basico);
+    printf("Intermediario: %d\n", intermediario);
+    printf("Premium: %d\n", premium);
+    printf("\nRenda recebida: R$ %.2f\n", renda);
+    printf("===========================================\n");
