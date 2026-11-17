@@ -451,3 +451,4 @@ void gerarRelatorio(void) {
     printf("Premium: %d\n", premium);
     printf("\nRenda recebida: R$ %.2f\n", renda);
     printf("===========================================\n");
+}
