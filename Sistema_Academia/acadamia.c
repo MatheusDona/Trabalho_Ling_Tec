@@ -225,3 +225,210 @@ void cadastrarAluno() {
         printf("\nAluno cadastrado com sucesso!\n");
     }
 }
+
+void buscarAluno() {
+    char cpf[15];
+    int pos;
+
+    printf("\n--- BUSCAR ALUNO ---\n");
+    printf("CPF: ");
+    lerTexto(cpf, 15);
+
+    pos = buscarPorCpf(cpf);
+    if (pos == -1) {
+        printf("\nAluno nao encontrado.\n");
+    } else {
+        exibirAluno(pos);
+    }
+}
+
+void alterarCadastro() {
+    char cpf[15];
+    int pos;
+
+    printf("\n--- ALTERAR CADASTRO ---\n");
+    printf("CPF: ");
+    lerTexto(cpf, 15);
+
+    pos = buscarPorCpf(cpf);
+    if (pos == -1) {
+        printf("\nAluno nao encontrado.\n");
+        return;
+    }
+
+    printf("\nDados atuais:\n");
+    exibirAluno(pos);
+    printf("\nDigite os novos dados:\n");
+
+    do {
+        printf("Nome: ");
+        lerTexto(nomes[pos], 100);
+        if (strlen(nomes[pos]) == 0) {
+            printf("Nome invalido! O nome nao pode ficar vazio.\n");
+        }
+    } while (strlen(nomes[pos]) == 0);
+
+    do {
+        printf("Telefone (DDD + numero): ");
+        lerTexto(telefones[pos], 20);
+        if (!validarTelefone(telefones[pos])) {
+            printf("Telefone invalido! Digite 10 ou 11 numeros.\n");
+        }
+    } while (!validarTelefone(telefones[pos]));
+
+    do {
+        printf("Idade: ");
+        idades[pos] = lerInteiro();
+        if (!validarIdade(idades[pos])) {
+            printf("Idade invalida! Digite um valor entre 12 e 100.\n");
+        }
+    } while (!validarIdade(idades[pos]));
+
+    planos[pos] = escolherPlano();
+    mensalidades[pos] = valorDoPlano(planos[pos]); /* atualiza o valor com o plano */
+
+    if (salvarDados()) {
+        printf("\nCadastro alterado com sucesso!\n");
+        printf("Mensalidade atual: R$ %.2f\n", mensalidades[pos]);
+    }
+}
+
+void excluirAluno() {
+    char cpf[15];
+    int pos, i;
+
+    printf("\n--- EXCLUIR ALUNO ---\n");
+    printf("CPF: ");
+    lerTexto(cpf, 15);
+
+    pos = buscarPorCpf(cpf);
+    if (pos == -1) {
+        printf("\nAluno nao encontrado.\n");
+        return;
+    }
+
+    exibirAluno(pos);
+    if (!confirmar("\nDeseja realmente excluir este aluno?")) {
+        printf("\nExclusao cancelada.\n");
+        return;
+    }
+    
+    for (i = pos; i < totalAlunos - 1; i++) {
+        strcpy(nomes[i], nomes[i + 1]);
+        strcpy(cpfs[i], cpfs[i + 1]);
+        strcpy(telefones[i], telefones[i + 1]);
+        idades[i] = idades[i + 1];
+        planos[i] = planos[i + 1];
+        mensalidades[i] = mensalidades[i + 1];
+        pagos[i] = pagos[i + 1];
+    }
+    totalAlunos--;
+
+    if (salvarDados()) {
+        printf("\nAluno excluido com sucesso!\n");
+    }
+}
+
+void registrarPagamento() {
+    char cpf[15];
+    int pos;
+
+    printf("\n--- REGISTRAR PAGAMENTO ---\n");
+    printf("CPF: ");
+    lerTexto(cpf, 15);
+
+    pos = buscarPorCpf(cpf);
+    if (pos == -1) {
+        printf("\nAluno nao encontrado.\n");
+        return;
+    }
+
+    if (pagos[pos] == 1) {
+        printf("\nA mensalidade de %s ja esta paga.\n", nomes[pos]);
+        return;
+    }
+
+    pagos[pos] = 1;
+    if (salvarDados()) {
+        printf("\nPagamento de %s registrado com sucesso!\n", nomes[pos]);
+    }
+}
+
+void listarPendentes() {
+    int i;
+    int pendentes = 0;
+
+    printf("\n--- ALUNOS PENDENTES ---\n");
+    for (i = 0; i < totalAlunos; i++) {
+        if (pagos[i] == 0) {
+            exibirAluno(i);
+            pendentes++;
+        }
+    }
+
+    if (pendentes == 0) {
+        printf("Nao ha alunos pendentes.\n");
+    } else {
+        printf("----------------------------------\n");
+        printf("Total de pendentes: %d\n", pendentes);
+    }
+}
+
+void iniciarNovoMes() {
+    int i;
+
+    printf("\n--- INICIAR NOVO MES ---\n");
+    if (totalAlunos == 0) {
+        printf("Nenhum aluno cadastrado.\n");
+        return;
+    }
+
+    printf("ATENCAO: todos os alunos serao marcados como Pendente!\n");
+    if (!confirmar("Deseja continuar?")) {
+        printf("\nOperacao cancelada.\n");
+        return;
+    }
+
+    for (i = 0; i < totalAlunos; i++) {
+        pagos[i] = 0;
+    }
+
+    if (salvarDados()) {
+        printf("\nNovo mes iniciado! Todos os alunos estao pendentes.\n");
+    }
+}
+
+void relatorioAcademia() {
+    int i;
+    int qtdPagos = 0, qtdPendentes = 0;
+    int basico = 0, intermediario = 0, premium = 0;
+    float renda = 0;
+
+    for (i = 0; i < totalAlunos; i++) {
+        if (pagos[i] == 1) {
+            qtdPagos++;
+            renda = renda + mensalidades[i];
+        } else {
+            qtdPendentes++;
+        }
+
+        if (planos[i] == 1) {
+            basico++;
+        } else if (planos[i] == 2) {
+            intermediario++;
+        } else {
+            premium++;
+        }
+    }
+
+    printf("\n===== RELATORIO DA ACADEMIA =====\n");
+    printf("Total de alunos: %d\n", totalAlunos);
+    printf("Alunos pagos: %d\n", qtdPagos);
+    printf("Alunos pendentes: %d\n", qtdPendentes);
+    printf("\nAlunos por plano:\n");
+    printf("  Basico: %d\n", basico);
+    printf("  Intermediario: %d\n", intermediario);
+    printf("  Premium: %d\n", premium);
+    printf("\nRenda recebida: R$ %.2f\n", renda);
+    printf("=================================\n");
+}
