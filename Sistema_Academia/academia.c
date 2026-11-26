@@ -226,6 +226,20 @@ void cadastrarAluno() {
     }
 }
 
+void listarAlunos() {
+    int i;
+
+    printf("\n--- LISTA DE ALUNOS ---\n");
+    if (totalAlunos == 0) {
+        printf("Nenhum aluno cadastrado.\n");
+        return;
+    }
+    for (i = 0; i < totalAlunos; i++) {
+        exibirAluno(i);
+    }
+    printf("----------------------------------\n");
+}
+
 void buscarAluno() {
     char cpf[15];
     int pos;
