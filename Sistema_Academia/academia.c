@@ -285,7 +285,7 @@ void alterarCadastro() {
     } while (!validarIdade(idades[pos]));
 
     planos[pos] = escolherPlano();
-    mensalidades[pos] = valorDoPlano(planos[pos]); /* atualiza o valor com o plano */
+    mensalidades[pos] = valorDoPlano(planos[pos]); 
 
     if (salvarDados()) {
         printf("\nCadastro alterado com sucesso!\n");
